@@ -65,7 +65,8 @@ protected:
 
 class GreenBox : public Box
 {
-  explicit GreenBox(double initial_weight) : Box(initial_weight) {}
+public:
+  using Box::Box;
 
   double absorb(uint32_t weight) override
   {
@@ -82,12 +83,9 @@ private:
 
 class BlueBox : public Box
 {
-  explicit BlueBox(double initial_weight) : Box(initial_weight) {}
-
-  double min_weight_ = std::numeric_limits<double>::infinity();
-  double max_weight_ = 0;
 
 public:
+  using Box::Box;
   double absorb(uint32_t token_weight) override
   {
     weight_ += token_weight;
@@ -99,10 +97,12 @@ public:
   }
 
 private:
-  double cantorPairing(double k1, double k2)
-  {
-    return 0.5 * (k1 + k2) * (k1 + k2 + 1) + k2;
-  }
+  uint32_t min_weight_ = std::numeric_limits<uint32_t>::max();
+  uint32_t max_weight_ = 0;
+
+  uint32_t cantorPairing(uint32_t k1, uint32_t k2) {
+    return ((k1 + k2) * (k1 + k2 + 1) / 2) + k2;
+}
 };
 
 class Player
@@ -111,13 +111,28 @@ public:
   void takeTurn(uint32_t input_weight,
                 const std::vector<std::unique_ptr<Box>> &boxes)
   {
-    // TODO
+    auto min_box_it = std::min_element(boxes.begin(), boxes.end(),
+                                       [](const std::unique_ptr<Box> &a, const std::unique_ptr<Box> &b)
+                                       {
+                                         return *a < *b;
+                                       });
+    score_ += (*min_box_it)->absorb(input_weight);
   }
   double getScore() const { return score_; }
 
 private:
   double score_{0.0};
 };
+
+std::unique_ptr<Box> Box::makeGreenBox(double initial_weight)
+{
+  return std::make_unique<GreenBox>(initial_weight);
+}
+
+std::unique_ptr<Box> Box::makeBlueBox(double initial_weight)
+{
+  return std::make_unique<BlueBox>(initial_weight);
+}
 
 std::pair<double, double> play(const std::vector<uint32_t> &input_weights)
 {
@@ -127,8 +142,15 @@ std::pair<double, double> play(const std::vector<uint32_t> &input_weights)
   boxes.emplace_back(Box::makeBlueBox(0.2));
   boxes.emplace_back(Box::makeBlueBox(0.3));
 
-  // TODO
   Player player_A, player_B;
+
+  for (size_t i = 0; i < input_weights.size(); ++i)
+  {
+    if (i % 2 == 0)
+      player_A.takeTurn(input_weights[i], boxes);
+    else
+      player_B.takeTurn(input_weights[i], boxes);
+  }
 
   std::cout << "Scores: player A " << player_A.getScore() << ", player B "
             << player_B.getScore() << std::endl;
@@ -153,10 +175,24 @@ TEST_CASE("Final scores for first 8 Fibonacci numbers", "[fibonacci8]")
 
 TEST_CASE("Test absorption of green box", "[green]")
 {
-  // TODO
+  std::unique_ptr<Box> green_box = Box::makeGreenBox(0.0);
+
+  green_box->absorb(10);
+  green_box->absorb(20);
+  green_box->absorb(30);
+
+  REQUIRE(green_box->absorb(40) == Approx(625.0));
 }
 
-TEST_CASE("Test absorption of blue box", "[blue]")
-{
-  // TODO
+TEST_CASE("Test absorption of blue box", "[blue]") {
+    std::unique_ptr<Box> blue_box = Box::makeBlueBox(0.0);
+
+    blue_box->absorb(5);  
+    blue_box->absorb(10); 
+    blue_box->absorb(15); 
+
+    uint32_t min_weight = 5, max_weight = 20;
+    uint32_t expected = ((min_weight + max_weight) * (min_weight + max_weight + 1) / 2) + max_weight;
+
+    REQUIRE(blue_box->absorb(20) == expected);
 }
