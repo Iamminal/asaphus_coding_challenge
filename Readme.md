@@ -63,8 +63,18 @@ After successfully building the project, you can run the executable to execute a
 ```
 This command runs the Catch2 test cases defined in the asaphus_coding_challenge.cpp file.
 
-## Game Mechanics
-Box Types: Green and blue, each with unique scoring rules.
-Token Absorption: Boxes absorb tokens altering their weights and scores.
-Players: Two players compete by choosing boxes to absorb tokens in turn.
-End Condition: The game ends when all tokens are absorbed, and the player with the highest score wins.
+## System Architecture
+
+Below is the UML class diagram representing the structure of the application:
+
+![Class Represtation Diagram](https://github.com/Iamminal/asaphus_coding_challenge/assets/40911116/16dab374-1c9d-4dcf-99b9-9055c9322216)
+
+### Description
+
+- **Box**: Abstract base class with a weight attribute. Has two derived classes, `GreenBox` and `BlueBox`.
+- **GreenBox**: Inherits from `Box` and calculates scores based on the mean of weights.
+- **BlueBox**: Inherits from `Box` and uses Cantor's pairing function for scoring based on min and max weights absorbed.
+- **Player**: Represents a player in the game, capable of taking turns and absorbing weights into boxes.
+- **play()**: Function orchestrating the game flow, managing players and turns based on input weights.
+
+This diagram helps to visualize the interactions between the main components of the game.
