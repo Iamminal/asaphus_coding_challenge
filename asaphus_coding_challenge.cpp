@@ -100,14 +100,17 @@ private:
   uint32_t min_weight_ = std::numeric_limits<uint32_t>::max();
   uint32_t max_weight_ = 0;
 
-  uint32_t cantorPairing(uint32_t k1, uint32_t k2) {
+  // Logic for cantor pairing
+  uint32_t cantorPairing(uint32_t k1, uint32_t k2)
+  {
     return ((k1 + k2) * (k1 + k2 + 1) / 2) + k2;
-}
+  }
 };
 
 class Player
 {
 public:
+  // Main logic  for playing the game
   void takeTurn(uint32_t input_weight,
                 const std::vector<std::unique_ptr<Box>> &boxes)
   {
@@ -124,6 +127,7 @@ private:
   double score_{0.0};
 };
 
+// Static factory methods for creating the Greenbox and BlueBox method
 std::unique_ptr<Box> Box::makeGreenBox(double initial_weight)
 {
   return std::make_unique<GreenBox>(initial_weight);
@@ -144,12 +148,12 @@ std::pair<double, double> play(const std::vector<uint32_t> &input_weights)
 
   Player player_A, player_B;
 
-  for (size_t i = 0; i < input_weights.size(); ++i)
+  for (size_t itr = 0; itr < input_weights.size(); ++itr)
   {
-    if (i % 2 == 0)
-      player_A.takeTurn(input_weights[i], boxes);
+    if (itr % 2 == 0)
+      player_A.takeTurn(input_weights[itr], boxes);
     else
-      player_B.takeTurn(input_weights[i], boxes);
+      player_B.takeTurn(input_weights[itr], boxes);
   }
 
   std::cout << "Scores: player A " << player_A.getScore() << ", player B "
@@ -184,15 +188,61 @@ TEST_CASE("Test absorption of green box", "[green]")
   REQUIRE(green_box->absorb(40) == Approx(625.0));
 }
 
-TEST_CASE("Test absorption of blue box", "[blue]") {
-    std::unique_ptr<Box> blue_box = Box::makeBlueBox(0.0);
+TEST_CASE("Test absorption of blue box", "[blue]")
+{
+  std::unique_ptr<Box> blue_box = Box::makeBlueBox(0.0);
 
-    blue_box->absorb(5);  
-    blue_box->absorb(10); 
-    blue_box->absorb(15); 
+  blue_box->absorb(5);
+  blue_box->absorb(10);
+  blue_box->absorb(15);
 
-    uint32_t min_weight = 5, max_weight = 20;
-    uint32_t expected = ((min_weight + max_weight) * (min_weight + max_weight + 1) / 2) + max_weight;
+  uint32_t min_weight = 5, max_weight = 20;
+  uint32_t expected = ((min_weight + max_weight) * (min_weight + max_weight + 1) / 2) + max_weight;
 
-    REQUIRE(blue_box->absorb(20) == expected);
+  REQUIRE(blue_box->absorb(20) == expected);
+}
+
+// Test with all input weights the same
+TEST_CASE("All input weights are the same", "[uniform]")
+{
+  std::vector<uint32_t> inputs(10, 5); // Ten inputs, all 5
+  auto result = play(inputs);
+  REQUIRE(result.first >= 0.0);
+  REQUIRE(result.second >= 0.0);
+}
+
+// Test with no input weights
+TEST_CASE("No input weights provided", "[empty]")
+{
+  std::vector<uint32_t> inputs;
+  auto result = play(inputs);
+  REQUIRE(result.first == 0.0);
+  REQUIRE(result.second == 0.0);
+}
+
+// Test with extreme values
+TEST_CASE("Extreme values in inputs", "[extreme]")
+{
+  std::vector<uint32_t> inputs{std::numeric_limits<uint32_t>::min(), std::numeric_limits<uint32_t>::max()};
+  auto result = play(inputs);
+  REQUIRE(result.first >= 0.0);
+  REQUIRE(result.second >= 0.0);
+}
+
+// Test alternating high and low values
+TEST_CASE("Alternating high and low values", "[alternating]")
+{
+  std::vector<uint32_t> inputs{1, 4294967295, 1, 4294967295, 1, 4294967295};
+  auto result = play(inputs);
+  REQUIRE(result.first >= 0.0);
+  REQUIRE(result.second >= 0.0);
+}
+
+// Test large number of inputs
+TEST_CASE("Large number of inputs", "[large_input]")
+{
+  std::vector<uint32_t> inputs(1000, 10); // 1000 inputs, all 10
+  auto result = play(inputs);
+  REQUIRE(result.first >= 0.0);
+  REQUIRE(result.second >= 0.0);
 }
